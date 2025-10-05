@@ -44,8 +44,7 @@ def create_engineered_features(df):
     return df_new
 
 
-def preprocess_full_data(df):
-    
+def preprocess_full_data(df, scale_data=True):
     x = df.drop(columns=['Concrete compressive strength(MPa, megapascals) '])
     y = df['Concrete compressive strength(MPa, megapascals) ']    
 
@@ -56,17 +55,22 @@ def preprocess_full_data(df):
     scaler = StandardScaler()
     encoder = OrdinalEncoder()
 
-    X_train[numerical_columns] = scaler.fit_transform(X_train[numerical_columns])
-    X_test[numerical_columns] = scaler.transform(X_test[numerical_columns])
+    if scale_data:
+        X_train[numerical_columns] = scaler.fit_transform(X_train[numerical_columns])
+        X_test[numerical_columns] = scaler.transform(X_test[numerical_columns])
+        # Save the scaler only if scaling is used
+        os.makedirs('saved/preprocessing', exist_ok=True)
+        joblib.dump(scaler, 'saved/preprocessing/scaler.joblib')
+    else:
+        # If not scaling, just copy the data (no transformation)
+        X_train[numerical_columns] = X_train[numerical_columns].copy()
+        X_test[numerical_columns] = X_test[numerical_columns].copy()
 
     if len(categorical_columns) > 0:
         X_train[categorical_columns] = encoder.fit_transform(X_train[categorical_columns])
         X_test[categorical_columns] = encoder.transform(X_test[categorical_columns])
-
-    # Save the encoders
-    os.makedirs('saved/preprocessing', exist_ok=True)
-    joblib.dump(scaler, 'saved/preprocessing/scaler.joblib')
-    joblib.dump(encoder, 'saved/preprocessing/encoder.joblib')
+        # Save the encoder
+        os.makedirs('saved/preprocessing', exist_ok=True)
+        joblib.dump(encoder, 'saved/preprocessing/encoder.joblib')
 
     return X_train, X_test, y_train, y_test
-

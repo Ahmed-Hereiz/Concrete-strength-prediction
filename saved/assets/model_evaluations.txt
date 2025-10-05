@@ -1,0 +1,20 @@
+Model Evaluation Results with 20 Cross validation sets
+============================================================
+Model: Random Forest
+  Test RMSE: 4.4237
+  Test R2: 0.9345
+  CV RMSE (mean ± std): 4.9444 ± 1.0628
+  CV R2 (mean ± std): 0.9033 ± 0.0407
+------------------------------------------------------------
+Model: Extra Trees
+  Test RMSE: 4.2143
+  Test R2: 0.9405
+  CV RMSE (mean ± std): 4.5759 ± 1.0517
+  CV R2 (mean ± std): 0.9165 ± 0.0408
+------------------------------------------------------------
+Model: LightGBM
+  Test RMSE: 3.5645
+  Test R2: 0.9575
+  CV RMSE (mean ± std): 4.3199 ± 1.1554
+  CV R2 (mean ± std): 0.9246 ± 0.0409
+------------------------------------------------------------

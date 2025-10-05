@@ -1,0 +1,67 @@
+<!-- index.html - Frontend HTML -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concrete Strength Predictor</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Concrete Strength Predictor</h1>
+            <p>Adjust the parameters to configure your concrete mixture and predict compressive strength.</p>
+        </header>
+        
+        <div class="main-content">
+            <!-- Left Panel: Inputs -->
+            <div class="left-panel">
+                <h2>Mixture Parameters</h2>
+                <div class="sliders-container">
+                    <!-- Sliders will be generated here by JS -->
+                </div>
+                <div class="controls">
+                    <button id="reset-btn">Reset to Defaults</button>
+                    <button id="calculate-btn">Calculate Strength</button>
+                </div>
+            </div>
+            
+            <!-- Right Panel: Results -->
+            <div class="right-panel">
+                <div class="results-group">
+                    <h2>Prediction Results</h2>
+                    <div class="model-selection">
+                        <label for="model-select">Prediction Model:</label>
+                        <select id="model-select">
+                            <option value="Random Forest">Random Forest</option>
+                            <option value="Extra Trees">Extra Trees</option>
+                            <option value="LightGBM">LightGBM</option>
+                        </select>
+                    </div>
+                    <div class="strength-display">
+                        <h3>Predicted Compressive Strength</h3>
+                        <div id="strength-value">--</div>
+                        <span>MPa</span>
+                    </div>
+                    <progress id="strength-bar" value="0" max="100"></progress>
+                </div>
+                
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="original">Original Features</button>
+                    <button class="tab-button" data-tab="engineered">Engineered Features</button>
+                </div>
+                <div class="tab-content active" id="original-tab">
+                    <!-- Original features will be displayed here -->
+                </div>
+                <div class="tab-content" id="engineered-tab">
+                    <!-- Engineered features will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/script.js"></script>
+</body>
+</html>
