@@ -1,6 +1,6 @@
 import pandas as pd
 from make_visuals import (
-    visualize_feature_distributaion,
+    visualize_feature_distribution,
     visualize_feature_pairplot,
     visualize_scatterplot_bivariate,
     visualize_correlation_heatmap
@@ -58,11 +58,11 @@ def load_data_with_feature_engineering(file_path):
 
 if __name__ == "__main__":
     df_original = load_data_without_feature_engineering("data/Concrete_Data.xls")
-    visualize_feature_distributaion(df_original)
+    visualize_feature_distribution(df_original)
     visualize_feature_pairplot(df_original)
     visualize_scatterplot_bivariate(df_original,x="Cement") 
     visualize_scatterplot_bivariate(df_original, x="Age_Days", trendline="lowess")   
 
     df_engineered = load_data_with_feature_engineering("data/Concrete_Data.xls")
-    visualize_feature_distributaion(df_engineered)
+    visualize_feature_distribution(df_engineered)
     visualize_correlation_heatmap(df_engineered)

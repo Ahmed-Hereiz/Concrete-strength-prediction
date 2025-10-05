@@ -1,132 +1,66 @@
 import numpy as np
-import plotly.express as px
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+import os
 
+# Ensure the save directory exists
+os.makedirs("saved/visualization", exist_ok=True)
 
-def visualize_feature_distributaion(df, show_plot=True):
-
+def visualize_feature_distribution(df, show_plot=False):
     features = df.columns
+    for feature in features:
+        # Create a single plot for each feature
+        fig, ax = plt.subplots(figsize=(4, 3), constrained_layout=True)
+        ax.hist(df[feature], bins=30, color='steelblue', edgecolor='black')  # Reduced bins for faster rendering
+        ax.set_title(feature, fontsize=10)
+        ax.set_xlabel(f"{feature} ")
+        ax.set_ylabel("Frequency")
+        ax.grid(True, linestyle='--', alpha=0.5)  # Simplified grid
+        
+        # Save individual histogram
+        plt.savefig(f"saved/visualization/histogram_{feature}.png", dpi=300, bbox_inches='tight')
+        plt.close(fig)  # Close immediately to free memory
 
-    n_features = len(features)
-    n_cols = 3
-    n_rows = int(np.ceil(n_features / n_cols))
+def visualize_feature_pairplot(df, show_plot=False):
+    # Use seaborn pairplot with reduced marker size and simpler histograms
+    g = sns.pairplot(df, diag_kind='hist', plot_kws={'color': '#2E7FBA', 'alpha': 0.5, 's': 10})
+    g.fig.suptitle("Pair Plot of Features", fontsize=12, y=1.02)
     
-    # Enhanced resolution: increase base size and bin count
-    base_size = 600  # was 300
-    width = n_cols * base_size
-    height = n_rows * base_size
-    width = max(1600, width)
-    height = max(1600, height)
+    # Adjust axis labels with units
+    for ax in g.axes.flatten():
+        if ax.get_xlabel():
+            ax.set_xlabel(f"{ax.get_xlabel()} ")
+        if ax.get_ylabel():
+            ax.set_ylabel(f"{ax.get_ylabel()} ")
     
-    fig = make_subplots(rows=n_rows, cols=n_cols, subplot_titles=features)
-    for i, feature in enumerate(features):
-        row = i // 3 + 1
-        col = i % 3 + 1
-        # Use more bins for higher resolution
-        fig.add_trace(
-            go.Histogram(
-                x=df[feature], 
-                name=feature, 
-                marker=dict(color="steelblue"),
-                nbinsx=60  # increase bin count for smoother histograms
-            ), 
-            row=row, col=col
-        )
+    # Save the pairplot
+    g.savefig("saved/visualization/feature_pairplot.png", dpi=300, bbox_inches='tight')
+    plt.close(g.fig)
 
-    fig.update_layout(
-        title="Feature Distributions",
-        template="plotly_white",
-        height=height,
-        width=width,
-        showlegend=False,
-        font=dict(size=22),  # larger font for clarity
-        margin=dict(l=40, r=40, t=80, b=40)
-    )
-
-    if show_plot:
-        fig.show(config={"displayModeBar": True, "displaylogo": False})
-
-    fig.write_html("saved/visualization/feature_distribution_histograms.html", full_html=True, include_plotlyjs="cdn")
-
-
-def visualize_feature_pairplot(df, show_plot=True):
-    # Enhanced resolution: larger figure, larger marker size, larger font
-    fig = px.scatter_matrix(
-        df,
-        dimensions=df.columns,
-        title="Pair Plot of Features",
-        color_discrete_sequence=["#2E7FBA"],
-        height=1800,
-        width=1800
-    )
-
-    fig.update_traces(diagonal_visible=True, marker=dict(size=7, opacity=0.7))
-    fig.update_layout(
-        template="plotly_white",
-        font=dict(size=22),
-        margin=dict(l=40, r=40, t=80, b=40)
-    )
-
-    if show_plot:
-        fig.show(config={"displayModeBar": True, "displaylogo": False})
-
-    fig.write_html("saved/visualization/feature_pairplot.html", full_html=True, include_plotlyjs="cdn")
-
-def visualize_scatterplot_bivariate(df, x, y="Strength", show_plot=True, trendline=None):
-    # Enhanced resolution: larger figure, larger marker, larger font
-    fig = px.scatter(
-        df, x=x, y=y,
-        template="plotly_white", opacity=0.7, trendline=trendline,
-        height=900, width=1600
-    )
-
-    fig.update_traces(marker=dict(size=12, opacity=0.8))
-    fig.update_layout(
-        title=f"{x} vs {y}",
-        font=dict(size=22),
-        margin=dict(l=40, r=40, t=80, b=40)
-    )
+def visualize_scatterplot_bivariate(df, x, y="Strength", show_plot=False, trendline=None):
+    fig, ax = plt.subplots(figsize=(4, 3), constrained_layout=True)
+    ax.scatter(df[x], df[y], color='steelblue', alpha=0.5, s=30, edgecolor='black')  # Reduced marker size
     
-    if show_plot:
-        fig.show(config={"displayModeBar": True, "displaylogo": False})
+    if trendline == 'ols':
+        sns.regplot(x=df[x], y=df[y], ax=ax, scatter=False, color='red', line_kws={'linewidth': 1})
+    
+    ax.set_title(f"{x} vs {y}", fontsize=10)
+    ax.set_xlabel(f"{x} ")
+    ax.set_ylabel(f"{y} ")
+    ax.grid(True, linestyle='--', alpha=0.5)
+    
+    plt.savefig(f"saved/visualization/{x}_vs_{y}.png", dpi=300, bbox_inches='tight')
+    plt.close(fig)
 
-    fig.write_html(f"saved/visualization/{x}_vs_{y}.html", full_html=True, include_plotlyjs="cdn")
-
-
-def visualize_correlation_heatmap(df, show_plot=True):
-    # Enhanced resolution: larger figure, larger font, larger cell text
+def visualize_correlation_heatmap(df, show_plot=False):
     corr_matrix = df.drop(columns=["Age_Category"], errors="ignore").corr().round(2)
-
-    # Remove 'titlefont' from colorbar dict, as it is not a valid property
-    fig = go.Figure(
-        data=go.Heatmap(
-            z=corr_matrix.values,
-            x=corr_matrix.columns,
-            y=corr_matrix.index,
-            colorscale="Blues",
-            zmin=-1, zmax=1,
-            colorbar=dict(title="Correlation", tickfont=dict(size=20)),
-            text=corr_matrix.values,
-            texttemplate="%{text}",
-            hoverinfo="z"
-        )
-    )
-
-    fig.update_layout(
-        title="Correlation Heatmap with Values (Excluding Age_Category)",
-        width=1800, height=1400,
-        template="plotly_white",
-        font=dict(size=22),
-        margin=dict(l=40, r=40, t=80, b=40)
-    )
-
-    # Increase annotation font size for heatmap
-    for d in fig.data:
-        if hasattr(d, "textfont"):
-            d.textfont = dict(size=20)
-
-    if show_plot:
-        fig.show(config={"displayModeBar": True, "displaylogo": False})
-
-    fig.write_html("saved/visualization/correlation_heatmap.html", full_html=True, include_plotlyjs="cdn")
+    
+    fig, ax = plt.subplots(figsize=(6, 5), constrained_layout=True)
+    sns.heatmap(corr_matrix, annot=True, fmt=".2f", cmap="Blues", vmin=-1, vmax=1,
+                annot_kws={"size": 8}, cbar_kws={'label': 'Correlation'}, ax=ax)
+    
+    ax.set_title("Correlation Heatmap", fontsize=10)
+    
+    plt.savefig("saved/visualization/correlation_heatmap.png", dpi=300, bbox_inches='tight')
+    plt.close(fig)
