@@ -9,9 +9,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from typing import List, Dict
-from preprocessing import create_engineered_features  # Assuming this module is available
+from preprocessing import create_engineered_features  
 
-# Define features, short names, units, ranges (same as in gui.py)
 features = [
     'Cement (component 1)(kg in a m^3 mixture)',
     'Blast Furnace Slag (component 2)(kg in a m^3 mixture)',
@@ -24,14 +23,14 @@ features = [
 ]
 
 short_names = [
-    'Cement',
-    'Blast Furnace Slag', 
-    'Fly Ash',
-    'Water',
-    'Superplasticizer',
-    'Coarse Aggregate',
-    'Fine Aggregate',
-    'Age'
+    'cement',
+    'blast-furnace slag', 
+    'fly-ash',
+    'water',
+    'superplasticizer',
+    'coarse aggregate',
+    'fine aggregate',
+    'age'
 ]
 
 units = [
@@ -91,8 +90,6 @@ async def predict(input_data: PredictionInput):
     try:
         input_dict = dict(zip(features, input_data.inputs))
         input_df = pd.DataFrame([input_dict])
-        
-        # Compute engineered features
         engineered_df = create_engineered_features(input_df)
         
         # Handle categorical encoding if needed (assuming encoder exists if required)

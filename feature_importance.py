@@ -10,52 +10,38 @@ def rename_features(df):
     Renames the DataFrame columns to match the abbreviated names as in the paper.
     """
     rename_map = {
-        'Cement (component 1)(kg in a m^3 mixture)': 'C',
-        'Blast Furnace Slag (component 2)(kg in a m^3 mixture)': 'BFS',
-        'Fly Ash (component 3)(kg in a m^3 mixture)': 'FAsh',
-        'Water  (component 4)(kg in a m^3 mixture)': 'W',
-        'Superplasticizer (component 5)(kg in a m^3 mixture)': 'SP',
-        'Coarse Aggregate  (component 6)(kg in a m^3 mixture)': 'CA',
-        'Fine Aggregate (component 7)(kg in a m^3 mixture)': 'FA',
-        'Age (day)': 'Age',
-        'Concrete compressive strength(MPa, megapascals) ': 'Strength',
-        'water_cement_ratio': 'w/c',
-        'total_cementitious': 'Total_Cem',
-        'cementitious_water_ratio': 'Cem/w',
-        'total_aggregate': 'Total_Agg',
-        'fine_coarse_ratio': 'FA/CA',
-        'percent_Cement': '%C',
-        'percent_Blast Furnace Slag': '%BFS',
-        'percent_Fly Ash': '%FAsh',
-        'percent_Water': '%W',
-        'percent_Superplasticizer': '%SP',
-        'percent_Coarse Aggregate': '%CA',
-        'percent_Fine Aggregate': '%FA',
-        'log_age': 'log_Age',
-        'age_category': 'Age_cat',
-        'age_cement_interaction': 'Age*C',
-        'cement_squared': 'C^2',
-        'water_squared': 'W^2',
-        'paste_volume_ratio': 'PVR'
+        "Cement (component 1)(kg in a m^3 mixture)": "cement",
+        "Blast Furnace Slag (component 2)(kg in a m^3 mixture)": "blast-furnace slag",
+        "Fly Ash (component 3)(kg in a m^3 mixture)": "fly-ash",
+        "Water  (component 4)(kg in a m^3 mixture)": "water",
+        "Superplasticizer (component 5)(kg in a m^3 mixture)": "superplasticizer",
+        "Coarse Aggregate  (component 6)(kg in a m^3 mixture)": "coarse aggregate",
+        "Fine Aggregate (component 7)(kg in a m^3 mixture)": "fine aggregate",
+        "Age (day)": "age",
+        "Concrete compressive strength(MPa, megapascals) ": "concrete CS",
+        "water_cement_ratio": "Water-to-Cement",
+        "total_cementitious": "Total Cementitious Materials",
+        "cementitious_water_ratio": "Cementitious-to-Water",
+        "total_aggregate": "Total Aggregate",
+        "fine_coarse_ratio": "Fine-to-Coarse Aggregate",
+        "paste_volume_ratio": "Paste Volume",
+        "percent_Cement": "Cement Percentage Composition",
+        "percent_Blast Furnace Slag": "blast-furnace slag Percentage Composition",
+        "percent_Fly Ash": "fly-ash Percentage Composition",
+        "percent_Water": "water Percentage Composition",
+        "percent_Superplasticizer": "superplasticizer Percentage Composition",
+        "percent_Coarse Aggregate": "coarse aggregate Percentage Composition",
+        "percent_Fine Aggregate": "fine aggregate Percentage Composition",
+        "log_age": "Log-Transformed Age",
+        "age_category": "Age Categorization",
+        "age_cement_interaction": "Age-Cement Interaction",
+        "cement_squared": "Polynomial Term (P_C)",
+        "water_squared": "Polynomial Term (P_W)"
     }
     df = df.rename(columns=rename_map)
     return df
 
 def calculate_feature_importance(df, target_col, test_size=0.2, random_state=42):
-    """
-    Trains an LGBMRegressor and returns a DataFrame of feature importances with renamed features.
-    
-    Parameters:
-        df (pd.DataFrame): DataFrame with engineered features.
-        target_col (str): The name of the target column (after renaming).
-        test_size (float): Proportion of data to be used as test set.
-        random_state (int): Seed for reproducibility.
-        
-    Returns:
-        model: The trained LGBMRegressor.
-        importance_df (pd.DataFrame): DataFrame containing features and their importance scores.
-        X_train, X_test, y_train, y_test: Data splits.
-    """
     # Split the data into features and target
     X = df.drop(columns=[target_col])
     y = df[target_col]
@@ -91,7 +77,7 @@ if __name__ == "__main__":
     df = rename_features(df)
     
     # Define the target variable name (after renaming)
-    target = 'Strength'
+    target = 'concrete CS'
     
     # Calculate feature importance using the function
     model, importance_df, X_train, X_test, y_train, y_test = calculate_feature_importance(df, target)

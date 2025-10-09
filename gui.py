@@ -24,14 +24,14 @@ features = [
 
 # Short names for display
 short_names = [
-    'Cement',
-    'Blast Furnace Slag', 
-    'Fly Ash',
-    'Water',
-    'Superplasticizer',
-    'Coarse Aggregate',
-    'Fine Aggregate',
-    'Age'
+    'cement',
+    'blast-furnace slag', 
+    'fly-ash',
+    'water',
+    'superplasticizer',
+    'coarse aggregate',
+    'fine aggregate',
+    'age'
 ]
 
 # Units for display
