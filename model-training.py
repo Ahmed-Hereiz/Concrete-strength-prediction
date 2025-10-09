@@ -1,6 +1,6 @@
 from preprocessing import create_engineered_features, preprocess_full_data
 from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor
-# from xgboost import XGBRegressor
+from sklearn.ensemble import VotingRegressor
 from lightgbm import LGBMRegressor
 # from catboost import CatBoostRegressor
 from sklearn.metrics import mean_squared_error, r2_score
@@ -12,6 +12,7 @@ import pandas as pd
 import shap 
 import warnings
 import os
+from xgboost import XGBRegressor
 
 warnings.filterwarnings('ignore')
 
@@ -19,10 +20,15 @@ def train_models(X_train, X_test, y_train, y_test, cv=20):
     # Define models
     models = {
         'Random Forest': RandomForestRegressor(random_state=42),
-        # 'XGBoost': XGBRegressor(random_state=42),
+        'XGBoost': XGBRegressor(random_state=42),
         'Extra Trees': ExtraTreesRegressor(random_state=42),
         'LightGBM': LGBMRegressor(random_state=42),
-        # 'CatBoost': CatBoostRegressor(random_state=42, verbose=False)
+        'Voting Regressor': VotingRegressor(estimators=[
+            ('rf', RandomForestRegressor(random_state=42)),
+            ('xgb', XGBRegressor(random_state=42)),
+            ('et', ExtraTreesRegressor(random_state=42)),
+            ('lgbm', LGBMRegressor(random_state=42)),
+        ])
     }
     metrics = {}  
     eval_lines = []
@@ -65,21 +71,25 @@ def train_models(X_train, X_test, y_train, y_test, cv=20):
         eval_lines.append(f"  CV R2 (mean ± std): {cv_r2_mean:.4f} ± {np.std(cv_r2_scores):.4f}\n")
         eval_lines.append("-"*60 + "\n")
         
-        print(f"Generating SHAP explanations for {name}...")
-        explainer = shap.TreeExplainer(model)
-        shap_values = explainer.shap_values(X_test)
-        
-        plt.figure(figsize=(10, 6))
-        shap.summary_plot(shap_values, X_test, show=False, plot_size=(10, 6))
-        plt.title(f'{name} SHAP Feature Importance')
-        plt.savefig(f'saved/assets/shap_method/{name.replace(" ", "_").lower()}_shap_summary.png', bbox_inches='tight')
-        plt.close()
-        
-        plt.figure(figsize=(10, 6))
-        shap.summary_plot(shap_values, X_test, plot_type="bar", show=False, plot_size=(10, 6))
-        plt.title(f'{name} Mean SHAP Value')
-        plt.savefig(f'saved/assets/shap_method/{name.replace(" ", "_").lower()}_shap_bar.png', bbox_inches='tight')
-        plt.close()
+        # Only generate SHAP explanations for supported models
+        if name != "Voting Regressor":
+            print(f"Generating SHAP explanations for {name}...")
+            explainer = shap.TreeExplainer(model)
+            shap_values = explainer.shap_values(X_test)
+            
+            plt.figure(figsize=(10, 6))
+            shap.summary_plot(shap_values, X_test, show=False, plot_size=(10, 6))
+            plt.title(f'{name} SHAP Feature Importance')
+            plt.savefig(f'saved/assets/shap_method/{name.replace(" ", "_").lower()}_shap_summary.png', bbox_inches='tight')
+            plt.close()
+            
+            plt.figure(figsize=(10, 6))
+            shap.summary_plot(shap_values, X_test, plot_type="bar", show=False, plot_size=(10, 6))
+            plt.title(f'{name} Mean SHAP Value')
+            plt.savefig(f'saved/assets/shap_method/{name.replace(" ", "_").lower()}_shap_bar.png', bbox_inches='tight')
+            plt.close()
+        else:
+            print(f"Skipping SHAP explanations for {name} (not supported by SHAP TreeExplainer).")
 
     # Save all metrics to a txt file
     os.makedirs('saved/assets', exist_ok=True)

@@ -4,7 +4,11 @@ import matplotlib.pyplot as plt
 import shap
 from lightgbm import LGBMRegressor
 from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import mutual_info_regression
+from scipy.stats import pearsonr
+from scipy.spatial.distance import pdist, squareform
 from preprocessing import create_engineered_features
+import os
 
 def rename_features(df):
     """
@@ -70,6 +74,79 @@ def calculate_shap(df, target, test_size=0.2, random_state=42):
 
     return model, X_test, shap_values
 
+def compute_pearson_correlations(df, target):
+    """
+    Compute Pearson correlation coefficients between each feature and the target.
+    Returns a sorted DataFrame.
+    """
+    results = []
+    for col in df.columns:
+        if col == target:
+            continue
+        try:
+            corr, pval = pearsonr(df[col], df[target])
+            results.append((col, corr, pval))
+        except Exception:
+            results.append((col, np.nan, np.nan))
+    corr_df = pd.DataFrame(results, columns=["Feature", "Pearson Correlation", "p-value"])
+    corr_df = corr_df.sort_values("Pearson Correlation", key=np.abs, ascending=False)
+    return corr_df
+
+def compute_mutual_information(df, target):
+    """
+    Compute mutual information between each feature and the target.
+    Returns a sorted DataFrame.
+    """
+    X_all = df.drop(columns=[target])
+    y = df[target]
+    # mutual_info_regression requires numeric inputs; drop non-numeric columns
+    X = X_all.select_dtypes(include=[np.number])
+    mi = mutual_info_regression(X, y, random_state=42)
+    mi_df = pd.DataFrame({"Feature": X.columns, "Mutual Information": mi})
+    mi_df = mi_df.sort_values("Mutual Information", ascending=False)
+    return mi_df
+
+def compute_distance_correlation(X, y):
+    """
+    Compute distance correlation between each feature in X and y.
+    Returns a sorted DataFrame.
+    """
+    def distance_corr(x, y):
+        # Centered distance matrices
+        a = squareform(pdist(x[:, None], 'euclidean'))
+        b = squareform(pdist(y[:, None], 'euclidean'))
+        A = a - a.mean(axis=0)[None, :] - a.mean(axis=1)[:, None] + a.mean()
+        B = b - b.mean(axis=0)[None, :] - b.mean(axis=1)[:, None] + b.mean()
+        dcov2_xy = (A * B).mean()
+        dcov2_xx = (A * A).mean()
+        dcov2_yy = (B * B).mean()
+        if dcov2_xx * dcov2_yy == 0:
+            return 0.0
+        return np.sqrt(dcov2_xy) / np.sqrt(np.sqrt(dcov2_xx) * np.sqrt(dcov2_yy))
+    results = []
+    for col in X.columns:
+        try:
+            dcor = distance_corr(X[col].values, y.values)
+            results.append((col, dcor))
+        except Exception:
+            results.append((col, np.nan))
+    dcor_df = pd.DataFrame(results, columns=["Feature", "Distance Correlation"])
+    dcor_df = dcor_df.sort_values("Distance Correlation", ascending=False)
+    return dcor_df
+
+def plot_correlation_bar(df, value_col, title, color="#4B8BBE", save_path=None):
+    fig, ax = plt.subplots(figsize=(12, 7))
+    df = df.copy()
+    ax.barh(df["Feature"], df[value_col], color=color, alpha=0.8)
+    ax.set_xlabel(value_col)
+    ax.set_title(title)
+    ax.invert_yaxis()
+    plt.tight_layout()
+    if save_path is not None:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path, bbox_inches="tight")
+    plt.close()
+
 if __name__ == "__main__":
     # Set global matplotlib params for high-quality output
     plt.rcParams.update({
@@ -85,6 +162,8 @@ if __name__ == "__main__":
         "axes.linewidth": 1.5,
         "figure.constrained_layout.use": False
     })
+
+    os.makedirs("saved/visualization", exist_ok=True)
 
     data_path = "data/Concrete_Data.xls"
     original_df = pd.read_excel(data_path)
@@ -106,9 +185,12 @@ if __name__ == "__main__":
     shap.plots.bar(shap_values_orig, max_display=None, show=False, ax=ax1)
     ax1.set_title("LightGBM Mean SHAP Value (Original Features)", fontsize=20)
     fig1.tight_layout()
-    plt.show()
+    bar_orig_path = "saved/visualization/shap_bar_original.png"
+    fig1.savefig(bar_orig_path, bbox_inches="tight")
+    plt.close(fig1)
 
     # ---- Plot 2: Beeswarm summary for ORIGINAL features ----
+    beeswarm_orig_path = "saved/visualization/shap_beeswarm_original.png"
     shap.summary_plot(
         shap_values_orig.values,
         X_orig,
@@ -120,16 +202,20 @@ if __name__ == "__main__":
         title="LightGBM SHAP Feature Importance (Original Features)"
     )
     plt.tight_layout()
-    plt.show()
+    plt.savefig(beeswarm_orig_path, bbox_inches="tight")
+    plt.close()
 
     # ---- Plot 3: Bar chart for ENGINEERED features ----
     fig3, ax3 = plt.subplots(figsize=(14, 10), dpi=200)
     shap.plots.bar(shap_values_eng, max_display=None, show=False, ax=ax3)
     ax3.set_title("LightGBM Mean SHAP Value (Engineered Features)", fontsize=20)
     fig3.tight_layout()
-    plt.show()
+    bar_eng_path = "saved/visualization/shap_bar_engineered.png"
+    fig3.savefig(bar_eng_path, bbox_inches="tight")
+    plt.close(fig3)
 
     # ---- Plot 4: Beeswarm summary for ENGINEERED features ----
+    beeswarm_eng_path = "saved/visualization/shap_beeswarm_engineered.png"
     shap.summary_plot(
         shap_values_eng.values,
         X_eng,
@@ -141,4 +227,72 @@ if __name__ == "__main__":
         title="LightGBM SHAP Feature Importance (Engineered Features)"
     )
     plt.tight_layout()
-    plt.show()
+    plt.savefig(beeswarm_eng_path, bbox_inches="tight")
+    plt.close()
+
+    # ---- Pearson Correlation Analysis ----
+    print("\n--- Pearson Correlation (Original Features) ---")
+    pearson_orig = compute_pearson_correlations(original_df_renamed, "concrete CS")
+    print(pearson_orig)
+    plot_correlation_bar(
+        pearson_orig,
+        "Pearson Correlation",
+        "Pearson Correlation with Target (Original Features)",
+        save_path="saved/visualization/pearson_correlation_original.png"
+    )
+
+    print("\n--- Pearson Correlation (Engineered Features) ---")
+    pearson_eng = compute_pearson_correlations(engineered_df, "concrete CS")
+    print(pearson_eng)
+    plot_correlation_bar(
+        pearson_eng,
+        "Pearson Correlation",
+        "Pearson Correlation with Target (Engineered Features)",
+        save_path="saved/visualization/pearson_correlation_engineered.png"
+    )
+
+    # ---- Mutual Information Analysis ----
+    print("\n--- Mutual Information (Original Features) ---")
+    mi_orig = compute_mutual_information(original_df_renamed, "concrete CS")
+    print(mi_orig)
+    plot_correlation_bar(
+        mi_orig,
+        "Mutual Information",
+        "Mutual Information with Target (Original Features)",
+        color="#2E7FBA",
+        save_path="saved/visualization/mutual_information_original.png"
+    )
+
+    print("\n--- Mutual Information (Engineered Features) ---")
+    mi_eng = compute_mutual_information(engineered_df, "concrete CS")
+    print(mi_eng)
+    plot_correlation_bar(
+        mi_eng,
+        "Mutual Information",
+        "Mutual Information with Target (Engineered Features)",
+        color="#2E7FBA",
+        save_path="saved/visualization/mutual_information_engineered.png"
+    )
+
+    # ---- Distance Correlation Analysis ----
+    print("\n--- Distance Correlation (Original Features) ---")
+    dcor_orig = compute_distance_correlation(original_df_renamed.drop(columns=["concrete CS"]), original_df_renamed["concrete CS"])
+    print(dcor_orig)
+    plot_correlation_bar(
+        dcor_orig,
+        "Distance Correlation",
+        "Distance Correlation with Target (Original Features)",
+        color="#A259F7",
+        save_path="saved/visualization/distance_correlation_original.png"
+    )
+
+    print("\n--- Distance Correlation (Engineered Features) ---")
+    dcor_eng = compute_distance_correlation(engineered_df.drop(columns=["concrete CS"]), engineered_df["concrete CS"])
+    print(dcor_eng)
+    plot_correlation_bar(
+        dcor_eng,
+        "Distance Correlation",
+        "Distance Correlation with Target (Engineered Features)",
+        color="#A259F7",
+        save_path="saved/visualization/distance_correlation_engineered.png"
+    )

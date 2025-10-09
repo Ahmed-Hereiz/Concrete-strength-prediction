@@ -58,11 +58,11 @@ def load_data_with_feature_engineering(file_path):
 
 if __name__ == "__main__":
     df_original = load_data_without_feature_engineering("data/Concrete_Data.xls")
-    visualize_feature_distribution(df_original)
+    visualize_feature_distribution(df_original,name="original_features")
     visualize_feature_pairplot(df_original)
-    visualize_scatterplot_bivariate(df_original,x="cement") 
-    visualize_scatterplot_bivariate(df_original, x="age", trendline="lowess")   
+    visualize_scatterplot_bivariate(df_original,x="cement",unit_x="kg/m³",unit_y="MPa") 
+    visualize_scatterplot_bivariate(df_original, x="age", trendline="lowess",unit_x="(days)",unit_y="MPa")   
 
     df_engineered = load_data_with_feature_engineering("data/Concrete_Data.xls")
-    visualize_feature_distribution(df_engineered)
+    visualize_feature_distribution(df_engineered,name="engineered_features")
     visualize_correlation_heatmap(df_engineered)

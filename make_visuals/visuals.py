@@ -70,16 +70,17 @@ def visualize_feature_pairplot(df, show_plot=False):
     g.savefig("saved/visualization/feature_pairplot.png", dpi=300, bbox_inches='tight')
     plt.close(g.fig)
 
-def visualize_scatterplot_bivariate(df, x, y="concrete CS", show_plot=False, trendline=None):
+def visualize_scatterplot_bivariate(df, x, y="concrete CS", show_plot=False, trendline=None,
+                                    unit_x="",unit_y=""):
     fig, ax = plt.subplots(figsize=(4, 3), constrained_layout=True)
     ax.scatter(df[x], df[y], color='steelblue', alpha=0.5, s=30, edgecolor='black')  # Reduced marker size
     
     if trendline == 'ols':
         sns.regplot(x=df[x], y=df[y], ax=ax, scatter=False, color='red', line_kws={'linewidth': 1})
     
-    ax.set_title(f"{x} vs {y}", fontsize=10)
-    ax.set_xlabel(f"{x} ")
-    ax.set_ylabel(f"{y} ")
+    ax.set_title(f"Relationship between {x} and {y}", fontsize=10)
+    ax.set_xlabel(f"{x} {unit_x}")
+    ax.set_ylabel(f"{y} {unit_y}")
     ax.grid(True, linestyle='--', alpha=0.5)
     
     plt.savefig(f"saved/visualization/{x}_vs_{y}.png", dpi=300, bbox_inches='tight')

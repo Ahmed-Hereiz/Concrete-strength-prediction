@@ -6,6 +6,12 @@ Model: Random Forest
   CV RMSE (mean ± std): 4.9444 ± 1.0628
   CV R2 (mean ± std): 0.9033 ± 0.0407
 ------------------------------------------------------------
+Model: XGBoost
+  Test RMSE: 4.1117
+  Test R2: 0.9434
+  CV RMSE (mean ± std): 4.4682 ± 1.0453
+  CV R2 (mean ± std): 0.9196 ± 0.0402
+------------------------------------------------------------
 Model: Extra Trees
   Test RMSE: 4.2143
   Test R2: 0.9405
@@ -17,4 +23,10 @@ Model: LightGBM
   Test R2: 0.9575
   CV RMSE (mean ± std): 4.3199 ± 1.1554
   CV R2 (mean ± std): 0.9246 ± 0.0409
+------------------------------------------------------------
+Model: Voting Regressor
+  Test RMSE: 3.7845
+  Test R2: 0.9520
+  CV RMSE (mean ± std): 4.3576 ± 1.0734
+  CV R2 (mean ± std): 0.9239 ± 0.0384
 ------------------------------------------------------------
